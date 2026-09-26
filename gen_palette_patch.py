@@ -31,7 +31,6 @@ REPO_WALL_JS = HERE / 'js' / 'pg_wallpaper.js'
 # 运行时同步目标（插件已在 custom_nodes 里时顺手更新；不存在就跳过）
 THEME_SYNC = [
     Path(r'D:/Comfyui/FUXIAO/ComfyUI/custom_nodes/ComfyUI-Sidebar-Themes/js/pg_sidebar_themes.js'),
-    Path(r'D:/Comfyui/FUXIAO/MyNodes/ComfyUI-Sidebar-Themes/js/pg_sidebar_themes.js'),
 ]
 WALL_SYNC = [
     Path(r'D:/Comfyui/FUXIAO/ComfyUI/custom_nodes/ComfyUI-Sidebar-Wallpaper/js/pg_wallpaper.js'),
@@ -341,7 +340,7 @@ WALLPAPER_JS_TEMPLATE = r'''/** pg_wallpaper.js — 侧边栏壁纸：上传 / �
   function log() {
     try { console.info.apply(console, ['[pg_wallpaper]'].concat([].slice.call(arguments))); } catch (e) {}
   }
-  log('pg_wallpaper v20260926j 已加载（壁纸 + 位置调整 + 双向可移）');
+  log('pg_wallpaper v20260926k 已加载（壁纸 + 位置调整 + 双向可移）');
 
   // ── 壁纸相关样式：图标栏/面板/内容容器透明透出父容器的图 + 按钮弹窗样式 ──
   try {
@@ -354,7 +353,10 @@ WALLPAPER_JS_TEMPLATE = r'''/** pg_wallpaper.js — 侧边栏壁纸：上传 / �
       'html[data-pg-bgimg] .comfyui-body-left .sidebar-item-group,' +
       'html[data-pg-bgimg] .comfyui-body-left .side-tool-bar-container.connected-sidebar,' +
       'html[data-pg-bgimg] .side-bar-panel,' +
-      'html[data-pg-bgimg] .side-bar-panel .sidebar-content-container{background-color:transparent !important}' +
+      'html[data-pg-bgimg] .side-bar-panel .sidebar-content-container,' +
+      // 面板内部的头部条/工具条自带 bg-comfy-menu-bg（如节点库的「节点」标题+搜索区），
+      // 不透明会把壁纸盖住 → 属性子串匹配同时兜住 bg-comfy-menu-bg 与 bg-[var(--comfy-menu-bg)]
+      'html[data-pg-bgimg] .side-bar-panel [class*="comfy-menu-bg"]{background-color:transparent !important}' +
       '.pgbg-btn{position:fixed;z-index:10000;width:28px;height:28px;border-radius:50%;border:1px solid var(--border-color);background:var(--comfy-menu-bg);color:var(--fg-color);opacity:.6;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 1px 6px rgba(0,0,0,.25)}' +
       '.pgbg-btn:hover{opacity:1}' +
       '.pgbg-pop{position:fixed;z-index:10000;width:230px;background:var(--comfy-menu-bg);color:var(--fg-color);border:1px solid var(--border-color);border-radius:10px;padding:12px;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.25)}' +
