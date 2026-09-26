@@ -340,7 +340,7 @@ WALLPAPER_JS_TEMPLATE = r'''/** pg_wallpaper.js — 侧边栏壁纸：上传 / �
   function log() {
     try { console.info.apply(console, ['[pg_wallpaper]'].concat([].slice.call(arguments))); } catch (e) {}
   }
-  log('pg_wallpaper v20260926k 已加载（壁纸 + 位置调整 + 双向可移）');
+  log('pg_wallpaper v20260926l 已加载（壁纸 + 位置调整 + 启动重试拉取）');
 
   // ── 壁纸相关样式：图标栏/面板/内容容器透明透出父容器的图 + 按钮弹窗样式 ──
   try {
@@ -416,22 +416,33 @@ WALLPAPER_JS_TEMPLATE = r'''/** pg_wallpaper.js — 侧边栏壁纸：上传 / �
         bgPush({ alpha: bgCfg.alpha, posX: bgCfg.posX, posY: bgCfg.posY });   // 图已存服务端，只同步遮挡/位置
       }
     }
+    // 启动时从服务端拉壁纸配置。曾经只在启动时拉一次，但 ComfyUI 重启后
+    // 打开页面的瞬间插件路由可能尚未就绪（或被前端 SPA 兜底路由用 200+HTML
+    // 接住，json() 解析失败），失败又被静默吞掉 → 整个会话都没壁纸。
+    // 因此改成带重试的轮询：没拉到有效配置就一直每 2s 重试（最多 60 次），
+    // 拉到或确认服务端无壁纸（显式 img:null 的 JSON）才停。
+    var bgPullTries = 0;
     function bgPull() {
-      if (!bgServerAvailable()) return;
+      if (!bgServerAvailable() || bgPullTries >= 60) return;
+      bgPullTries++;
       try {
         fetch('/pgwallpaper/config')
           .then(function (r) { return r.ok ? r.json() : null; })
           .then(function (j) {
-            if (!j || !j.img) return;
+            if (!j) throw new Error('bad response');
+            if (!j.img) { bgPullTries = 60; return; }   // 服务端明确无壁纸，停止重试
             bgCfg.img = j.img;
             if (typeof j.alpha === 'number') bgCfg.alpha = j.alpha;
             if (typeof j.posX === 'number') bgCfg.posX = j.posX;
             if (typeof j.posY === 'number') bgCfg.posY = j.posY;
             try { localStorage.setItem(BG_KEY, JSON.stringify(bgCfg)); } catch (e) {}
             try { applyBg(true); } catch (e) {}
-            log('从服务端加载壁纸成功');
-          }).catch(function () {});
-      } catch (e) {}
+            log('从服务端加载壁纸成功（第 ' + bgPullTries + ' 次尝试）');
+            bgPullTries = 60;   // 成功后停止重试
+          }).catch(function () {
+            setTimeout(function () { try { bgPull(); } catch (e) {} }, 2000);
+          });
+      } catch (e) { setTimeout(function () { try { bgPull(); } catch (e2) {} }, 2000); }
     }
     function isLightTheme() {
       // 独立插件：不读主题注册表，直接看页面文字颜色亮度 ——
