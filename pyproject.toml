@@ -11,9 +11,7 @@ DisplayName = "ComfyUI Sidebar Themes"
 Icon = ""
 PublisherId = "fuxiao-local"
 Video = ""
-
-[tool.comfy.includes]
-"ComfyUI-Sidebar-Themes" = "custom_nodes"
+includes = []
 
 [project.urls]
 Homepage = ""
